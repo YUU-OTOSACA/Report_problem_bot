@@ -7,7 +7,7 @@ The bot sends user requests to the bot administrator, and saves them to the Goog
 The bot token, the bot administrator id, the name of the Google table where the requests are saved, the path to the json file are in the file: ...\Report_problem_bot\config\bot.ini
 
 
-To launch the bot , you need to launch the Report_problem_bot shortcut on the desktop or file ...\Report_problem_bot\bot.exe .*
+To launch the bot, you need to run the file through the terminal bot.py*
 An internet connection is required for the bot to work
 
 
