@@ -33,6 +33,6 @@ Instructions for using the bot:
 8. Your request has been sent to the bot administrator and saved in Google tables, if new problems occur, repeat steps 4-7.
 
 
-* - for the computer that is the server.
+"*" - for the computer that is the server.
 
 Attention! To enter data about problems in the table, you need to create a service account and give him the opportunity to edit the table. More details can be found here: https://dvsemenov.ru/google-tablicy-i-python-podrobnoe-rukovodstvo-s-primerami / (section "Configuring connection in Google Api Console")
