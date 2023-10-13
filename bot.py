@@ -13,6 +13,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
+
 scope = [
 'https://www.googleapis.com/auth/spreadsheets',
 'https://www.googleapis.com/auth/drive'
@@ -25,9 +26,16 @@ config = load_config("config/bot.ini")
 credentials = ServiceAccountCredentials.from_json_keyfile_name(config.tg_bot.json, scope)
 client = gspread.authorize(credentials)
 
-bot = Bot(token=config.tg_bot.token)
+bot = Bot(config.tg_bot.token)
 
 number = 1
+
+class Problem_Report(StatesGroup):
+
+    message_error = State()
+    names = State()
+    problems = State()
+    create_databases = State()
 
 async def main():
     logging.basicConfig(
@@ -38,7 +46,7 @@ async def main():
 
     config = load_config("config/bot.ini")
 
-    bot = Bot(token=config.tg_bot.token)
+    bot = Bot(config.tg_bot.token)
     dp = Dispatcher(bot, storage=MemoryStorage())
 
     register_handlers_report(dp)
@@ -47,18 +55,23 @@ async def main():
 
     await dp.start_polling()
 
-async def cmd_start(message: types.Message):
+async def cmd_start(message: types.Message, state: FSMContext):
 
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = ["Сообщить о проблеме"]
     keyboard.add(*buttons)
 
     await message.answer("Привет, если у тебя возникли проблемы с оборудованием, то напиши мне.", reply_markup=keyboard)
+    await state.set_state(Problem_Report.message_error.state)
 
-class Problem_Report(StatesGroup):
-    names = State()
-    problems = State()
-    create_databases = State()
+async def Message_error(message: types.Message, state: FSMContext):
+
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Сообщить о проблеме"]
+    keyboard.add(*buttons)
+
+    await message.answer('Извините, я не понимаю, если хотите сообщить о проблеме, нажмите кнопку"Сообщить о проблеме".', reply_markup=keyboard)
+
 
 async def report_start(message: types.Message, state: FSMContext):
     await message.answer('Напишие ваши ФИО полностью', reply_markup=types.ReplyKeyboardRemove())
@@ -88,7 +101,6 @@ async def PROBLEM(message: types.Message, state: FSMContext):
 async def report(message: types.Message, state:FSMContext):
 
     global number
-
     config = load_config("config/bot.ini")
 
     user_data = await state.get_data()
@@ -105,7 +117,7 @@ async def report(message: types.Message, state:FSMContext):
 
     await bot.send_message(chat_id = config.tg_bot.admin_id, text =  text_problem)
 
-    with open("classmates.csv", mode="a", encoding='utf-8') as a_file:
+    with open("problemdata.csv", mode="a", encoding='utf-8') as a_file:
         global number
         file_writer = csv.writer(a_file, delimiter = ",", lineterminator="\r")
         file_writer.writerow([number, user_data['NAMES'], user_data['PROBLEMS']])
@@ -113,9 +125,10 @@ async def report(message: types.Message, state:FSMContext):
     number = number + 1
     sheet = client.open(config.tg_bot.sheet_name).sheet1
 
-    df = pd.read_csv('classmates.csv')
+    df = pd.read_csv('problemdata.csv')
 
     sheet.update([df.columns.values.tolist()] + df.values.tolist())
+    await state.set_state(Problem_Report.message_error.state)
 
 
 def register_handlers_report(dp: Dispatcher):
@@ -125,6 +138,7 @@ def register_handlers_report(dp: Dispatcher):
     dp.register_message_handler(cmd_start, commands="start", state="*")
     dp.register_message_handler(report_start, lambda message: message.text == "Изменить", state="*")
     dp.register_message_handler(report, lambda message: message.text == "Всё верно", state="*")
+    dp.register_message_handler(Message_error, state=Problem_Report.message_error)
 
 
 async def set_commands(bot: Bot):
